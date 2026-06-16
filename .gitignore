@@ -1,0 +1,18 @@
+# Podaci i Modeli
+*.csv
+*.pkl
+*.json
+
+# Virtual okruzenje
+venv/
+env/
+.env
+
+# Python kes
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# IDE
+.idea/
+.vscode/
