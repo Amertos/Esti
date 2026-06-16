@@ -142,6 +142,10 @@ def train_symbol(symbol="BTC-USD"):
 
 
 if __name__ == "__main__":
-    for s in ["BTC-USD", "ETH-USD"]:
-        train_symbol(s)
+    symbols = ["BTC-USD", "ETH-USD", "SOL-USD", "NVDA", "AAPL", "MSFT", "TSLA", "GOOGL", "META", "AMZN", "SPY"]
+    for s in symbols:
+        try:
+            train_symbol(s)
+        except Exception as e:
+            print(f"Error processing {s}: {e}")
     print("\n[DONE] All models have been trained and saved!")

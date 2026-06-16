@@ -125,5 +125,9 @@ def run_pipeline(symbol="BTC-USD", period="5y"):
 
 
 if __name__ == "__main__":
-    for symbol in ["BTC-USD", "ETH-USD"]:
-        run_pipeline(symbol, "5y")
+    symbols = ["BTC-USD", "ETH-USD", "SOL-USD", "NVDA", "AAPL", "MSFT", "TSLA", "GOOGL", "META", "AMZN", "SPY"]
+    for symbol in symbols:
+        try:
+            run_pipeline(symbol, "5y")
+        except Exception as e:
+            print(f"Error processing {symbol}: {e}")

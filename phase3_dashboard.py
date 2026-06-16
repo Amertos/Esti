@@ -52,8 +52,13 @@ SYMBOLS = {
     "Bitcoin (BTC)": "BTC-USD",
     "Ethereum (ETH)": "ETH-USD",
     "Solana (SOL)": "SOL-USD",
+    "Nvidia (NVDA)": "NVDA",
     "Apple (AAPL)": "AAPL",
+    "Microsoft (MSFT)": "MSFT",
     "Tesla (TSLA)": "TSLA",
+    "Alphabet (GOOGL)": "GOOGL",
+    "Meta (META)": "META",
+    "Amazon (AMZN)": "AMZN",
     "S&P 500 (SPY)": "SPY",
 }
 DROP_COLS = ['Target','Close','Open','High','Low','Volume','BB_High','BB_Low','SMA_200','EMA_200','Volume_SMA20']
