@@ -7,7 +7,7 @@ from plotly.subplots import make_subplots
 import pickle, json, ta, warnings
 warnings.filterwarnings('ignore')
 
-st.set_page_config(page_title="Quant AI Bot", layout="wide", page_icon="📈")
+st.set_page_config(page_title="Esti", layout="wide", page_icon="📈")
 
 CSS = """
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -121,7 +121,7 @@ def get_data(sym):
 
 # ── SIDEBAR ────────────────────────────────────────
 with st.sidebar:
-    st.markdown("<h2 style='text-align: center;'>⚡ QUANT ENGINE</h2>", unsafe_allow_html=True)
+    st.markdown("<h2 style='text-align: center;'>⚡ ESTI ENGINE</h2>", unsafe_allow_html=True)
     st.markdown("---")
     selected_name = st.selectbox("Izaberi Asset", list(SYMBOLS.keys()))
     symbol = SYMBOLS[selected_name]

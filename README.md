@@ -1,4 +1,4 @@
-# 📈 Quant AI Trading Bot
+# 📈 Esti
 End-to-End sistem za kvantitativno trgovanje koji koristi Machine Learning (XGBoost) za predviđanje kretanja cena kriptovaluta (BTC, ETH, SOL) i tradicionalnih aseta (AAPL, TSLA, SPY).
 
 ## 🚀 Mogućnosti (Features)
@@ -16,8 +16,8 @@ Projekat je podeljen u 3 faze:
 
 **1. Kloniranje repozitorijuma**
 ```bash
-git clone https://github.com/TvojUsername/quant-ai-bot.git
-cd quant-ai-bot
+git clone https://github.com/TvojUsername/esti.git
+cd esti
 ```
 
 **2. Instaliranje zavisnosti**
