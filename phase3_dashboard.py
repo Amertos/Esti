@@ -76,11 +76,21 @@ def load_meta(sym):
 @st.cache_data(ttl=1800)
 def get_data(sym):
     df = yf.download(sym, period="2y", interval="1d", progress=False)
+    if df.empty:
+        st.error(f"YFinance nije vratio podatke za {sym}. (Možda je API rate-limitovan na cloud-u)")
+        return pd.DataFrame()
+        
     if isinstance(df.columns, pd.MultiIndex):
         df.columns = df.columns.droplevel(1)
+        
     df.index = pd.to_datetime(df.index)
     df.sort_index(inplace=True)
-    c,h,l,v = df['Close'], df['High'], df['Low'], df['Volume']
+    
+    # Sigurnosno pretvaranje u 1D Serije (kako ta biblioteka zahteva)
+    c = df['Close'].squeeze()
+    h = df['High'].squeeze()
+    l = df['Low'].squeeze()
+    v = df['Volume'].squeeze()
     for w in [10,20,50,200]:
         df[f'SMA_{w}'] = c.rolling(w).mean()
         df[f'EMA_{w}'] = c.ewm(span=w, adjust=False).mean()
@@ -144,6 +154,8 @@ meta  = load_meta(symbol)
 
 with st.spinner(f"Fetching and processing {symbol} data..."):
     df = get_data(symbol)
+    if df.empty:
+        st.stop()
     period_map = {"3mo": 90, "6mo": 180, "1y": 365, "2y": 730}
     cutoff = df.index[-1] - pd.Timedelta(days=period_map.get(chart_period, 365))
     live_chart = df[df.index >= cutoff]
