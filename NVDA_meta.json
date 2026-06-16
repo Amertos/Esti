@@ -1,11 +1,11 @@
 {
-  "symbol": "BTC-USD",
+  "symbol": "NVDA",
   "metrics": {
-    "accuracy": 0.6104,
-    "precision": 0.3302,
-    "recall": 0.3846,
-    "f1": 0.3553,
-    "roc_auc": 0.5671
+    "accuracy": 0.6651,
+    "precision": 0.3636,
+    "recall": 0.1935,
+    "f1": 0.2526,
+    "roc_auc": 0.5532
   },
   "features": [
     "SMA_10",
@@ -45,5 +45,5 @@
     "DayOfWeek"
   ],
   "n_features": 35,
-  "n_estimators_best": 80
+  "n_estimators_best": 107
 }
