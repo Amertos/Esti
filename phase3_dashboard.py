@@ -148,6 +148,7 @@ with st.sidebar:
     show_vol   = st.checkbox("Volume", value=True)
     show_macd  = st.checkbox("MACD Oscillator", value=True)
     show_rsi   = st.checkbox("RSI Momentum", value=True)
+    show_sr    = st.checkbox("Support & Resistance", value=False)
     st.markdown("---")
     if st.button("🔄 Refresh Live Data", use_container_width=True):
         st.cache_data.clear()
@@ -185,7 +186,7 @@ m6.metric("Trend", "GOLDEN CROSS" if last['GoldenCross']==1 else "DEATH CROSS")
 st.markdown("<br>", unsafe_allow_html=True)
 
 # ── TABS ───────────────────────────────────────────
-t1, t2, t3, t4 = st.tabs(["🚀 Terminal (Chart)", "🧠 AI Quantum Signal", "🔬 Technical Inspection", "🗄️ Raw Data"])
+t1, t2, t3, t4, t5 = st.tabs(["🚀 Terminal (Chart)", "🧠 AI Quantum Signal", "🔬 Technical Inspection", "🗄️ Raw Data", "🎲 Monte Carlo Forecast"])
 
 # ── TAB 1: CHART ───────────────────────────────────
 with t1:
@@ -215,6 +216,13 @@ with t1:
     if show_bb:
         fig.add_trace(go.Scatter(x=live_chart.index, y=live_chart['BB_High'], line=dict(color='rgba(88,166,255,0.2)', width=1), showlegend=False), row=1, col=1)
         fig.add_trace(go.Scatter(x=live_chart.index, y=live_chart['BB_Low'], fill='tonexty', fillcolor='rgba(88,166,255,0.05)', line=dict(color='rgba(88,166,255,0.2)', width=1), name='Bollinger'), row=1, col=1)
+
+    if show_sr:
+        # Simple Support and Resistance lines based on recent 30-day min/max
+        recent_max = live_chart['High'].rolling(30).max()
+        recent_min = live_chart['Low'].rolling(30).min()
+        fig.add_trace(go.Scatter(x=live_chart.index, y=recent_max, line=dict(color='rgba(248,81,73,0.5)', width=1, dash='dash'), name='Resistance'), row=1, col=1)
+        fig.add_trace(go.Scatter(x=live_chart.index, y=recent_min, line=dict(color='rgba(86,211,100,0.5)', width=1, dash='dash'), name='Support'), row=1, col=1)
 
     curr = 2
     if show_vol:
@@ -361,3 +369,39 @@ with t4:
     )
     if st.button("💾 Download CSV Dump"):
         st.download_button("Click to Download", df.to_csv(), f"{symbol}_dump.csv", "text/csv")
+
+# ── TAB 5: MONTE CARLO SIMULATION ──────────────────
+with t5:
+    st.markdown("### 🎲 Monte Carlo 7-Day Forecast")
+    st.markdown("Simulating **100 possible future price paths** based on the asset's recent mathematical volatility using the Monte Carlo method.")
+    
+    days_to_sim = 7
+    simulations = 100
+    last_price = cur_price
+    daily_volatility = df['Daily_Return'].std() / 100
+    
+    sim_df = pd.DataFrame()
+    for x in range(simulations):
+        price_series = [last_price]
+        for y in range(days_to_sim):
+            # Apply a random shock based on normal distribution
+            shock = price_series[-1] * np.random.normal(0, daily_volatility)
+            price_series.append(price_series[-1] + shock)
+        sim_df[x] = price_series
+    
+    fig_mc = go.Figure()
+    for col in sim_df.columns:
+        fig_mc.add_trace(go.Scatter(y=sim_df[col], mode='lines', line=dict(color='rgba(88,166,255,0.06)'), showlegend=False))
+    
+    # Add median line
+    median_path = sim_df.median(axis=1)
+    fig_mc.add_trace(go.Scatter(y=median_path, mode='lines', line=dict(color='#bc8cff', width=3), name='Median Expected Path'))
+    
+    fig_mc.update_layout(
+        height=500, template='plotly_dark',
+        paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
+        xaxis=dict(title="Days Ahead", showgrid=False),
+        yaxis=dict(title="Simulated Price ($)", gridcolor='rgba(88,166,255,0.05)'),
+        margin=dict(l=10, r=10, t=20, b=10)
+    )
+    st.plotly_chart(fig_mc, use_container_width=True)
