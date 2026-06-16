@@ -4,7 +4,7 @@ import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
-import pickle, json, ta, warnings
+import pickle, json, ta, warnings, os
 warnings.filterwarnings('ignore')
 
 st.set_page_config(page_title="Esti", layout="wide", page_icon="📈")
@@ -46,7 +46,7 @@ hr { border-color: rgba(88,166,255,0.1) !important; margin: 20px 0 !important; }
 """
 st.markdown(CSS, unsafe_allow_html=True)
 
-import os
+# ── CONSTANTS ──────────────────────────────────────
 BASE = os.path.dirname(os.path.abspath(__file__))
 SYMBOLS = {
     "Bitcoin (BTC)": "BTC-USD",
@@ -62,14 +62,14 @@ DROP_COLS = ['Target','Close','Open','High','Low','Volume','BB_High','BB_Low','S
 @st.cache_resource
 def load_model(sym):
     try:
-        with open(f"{BASE}/{sym.replace('-','_')}_model.pkl",'rb') as f:
+        with open(os.path.join(BASE, f"{sym.replace('-','_')}_model.pkl"), 'rb') as f:
             return pickle.load(f)
     except: return None
 
 @st.cache_resource
 def load_meta(sym):
     try:
-        with open(f"{BASE}/{sym.replace('-','_')}_meta.json") as f:
+        with open(os.path.join(BASE, f"{sym.replace('-','_')}_meta.json")) as f:
             return json.load(f)
     except: return None
 
@@ -123,18 +123,18 @@ def get_data(sym):
 with st.sidebar:
     st.markdown("<h2 style='text-align: center;'>⚡ ESTI ENGINE</h2>", unsafe_allow_html=True)
     st.markdown("---")
-    selected_name = st.selectbox("Izaberi Asset", list(SYMBOLS.keys()))
+    selected_name = st.selectbox("Select Asset", list(SYMBOLS.keys()))
     symbol = SYMBOLS[selected_name]
-    chart_period = st.selectbox("Period Analize", ["3mo", "6mo", "1y", "2y"], index=2)
+    chart_period = st.selectbox("Analysis Period", ["3mo", "6mo", "1y", "2y"], index=2)
     st.markdown("---")
-    st.markdown("### 🎛️ HUD Kontrole")
-    show_sma   = st.checkbox("Prikazi SMA (10/50/200)", value=True)
+    st.markdown("### 🎛️ HUD Controls")
+    show_sma   = st.checkbox("Show SMA (10/50/200)", value=True)
     show_bb    = st.checkbox("Bollinger Bands", value=True)
-    show_vol   = st.checkbox("Volumen", value=True)
-    show_macd  = st.checkbox("MACD Oscilator", value=True)
+    show_vol   = st.checkbox("Volume", value=True)
+    show_macd  = st.checkbox("MACD Oscillator", value=True)
     show_rsi   = st.checkbox("RSI Momentum", value=True)
     st.markdown("---")
-    if st.button("🔄 Osvezi Live Podatke", use_container_width=True):
+    if st.button("🔄 Refresh Live Data", use_container_width=True):
         st.cache_data.clear()
         st.rerun()
 
@@ -142,7 +142,7 @@ with st.sidebar:
 model = load_model(symbol)
 meta  = load_meta(symbol)
 
-with st.spinner(f"Skidanje i obrada {symbol} podataka..."):
+with st.spinner(f"Fetching and processing {symbol} data..."):
     df = get_data(symbol)
     period_map = {"3mo": 90, "6mo": 180, "1y": 365, "2y": 730}
     cutoff = df.index[-1] - pd.Timedelta(days=period_map.get(chart_period, 365))
@@ -158,19 +158,19 @@ st.markdown(f"<h1>{selected_name} <span style='font-size: 1.5rem; color: #8b949e
 
 # ── METRICS HUD ────────────────────────────────────
 m1, m2, m3, m4, m5, m6 = st.columns(6)
-m1.metric("Live Cena", f"${cur_price:,.2f}", f"{chg_pct:+.2f}%")
+m1.metric("Live Price", f"${cur_price:,.2f}", f"{chg_pct:+.2f}%")
 m2.metric("RSI (14d)", f"{last['RSI_14']:.1f}", "OVERBOUGHT" if last['RSI_14']>70 else ("OVERSOLD" if last['RSI_14']<30 else "NEUTRAL"))
 m3.metric("MACD Cross", "BULLISH" if last['MACD_Cross']==1 else "BEARISH", f"{last['MACD_Diff']:.2f}")
-m4.metric("Volatilnost", f"{last['Volatility_20']:.1f}%")
-m5.metric("Volumen", f"{last['Volume_Ratio']:.2f}x", "VISOK" if last['Volume_Ratio']>1.5 else "NORMALAN")
+m4.metric("Volatility", f"{last['Volatility_20']:.1f}%")
+m5.metric("Volume", f"{last['Volume_Ratio']:.2f}x", "HIGH" if last['Volume_Ratio']>1.5 else "NORMAL")
 m6.metric("Trend", "GOLDEN CROSS" if last['GoldenCross']==1 else "DEATH CROSS")
 
 st.markdown("<br>", unsafe_allow_html=True)
 
 # ── TABS ───────────────────────────────────────────
-t1, t2, t3, t4 = st.tabs(["🚀 Terminal (Grafikon)", "🧠 AI Quantum Signal", "🔬 Tehnicka Inspekcija", "🗄️ Raw Data"])
+t1, t2, t3, t4 = st.tabs(["🚀 Terminal (Chart)", "🧠 AI Quantum Signal", "🔬 Technical Inspection", "🗄️ Raw Data"])
 
-# ── TAB 1: GRAFIKON ────────────────────────────────
+# ── TAB 1: CHART ───────────────────────────────────
 with t1:
     rows = 1
     heights = [0.5]
@@ -184,7 +184,7 @@ with t1:
     # Candlestick
     fig.add_trace(go.Candlestick(
         x=live_chart.index, open=live_chart['Open'], high=live_chart['High'],
-        low=live_chart['Low'], close=live_chart['Close'], name="Cena",
+        low=live_chart['Low'], close=live_chart['Close'], name="Price",
         increasing_line_color='#56d364', decreasing_line_color='#f85149',
         increasing_fillcolor='#56d364', decreasing_fillcolor='#f85149'
     ), row=1, col=1)
@@ -231,9 +231,9 @@ with t1:
 # ── TAB 2: AI SIGNAL ───────────────────────────────
 with t2:
     if model is None or meta is None:
-        st.error("⚠️ AI Model za ovaj asset nije pronađen. Molimo pokrenite Phase 2 trening.")
+        st.error("⚠️ AI Model for this asset not found. Please run Phase 2 training.")
     else:
-        # Priprema
+        # Preparation
         X_today = df.iloc[-1:].copy()
         for col in DROP_COLS:
             if col in X_today.columns: X_today = X_today.drop(columns=[col])
@@ -243,19 +243,19 @@ with t2:
             if f not in X_today.columns: X_today[f] = 0
         X_today = X_today[m_features]
 
-        # Inerencija
+        # Inference
         prob_buy = float(model.predict_proba(X_today)[0][1])
         prob_sell = 1 - prob_buy
 
         c1, c2, c3 = st.columns([1, 2, 1])
         with c2:
-            st.markdown("<h3 style='text-align:center;'>Projekcija: Naredna 3 Dana</h3>", unsafe_allow_html=True)
+            st.markdown("<h3 style='text-align:center;'>Projection: Next 3 Days</h3>", unsafe_allow_html=True)
             if prob_buy >= 0.60:
-                st.markdown(f"<div class='sig-buy'>🟢 LONG / BUY<br><span style='font-size:18px; font-weight:500; color:#c9d1d9;'>Pouzdanost Rasta: {prob_buy*100:.1f}%</span></div>", unsafe_allow_html=True)
+                st.markdown(f"<div class='sig-buy'>🟢 LONG / BUY<br><span style='font-size:18px; font-weight:500; color:#c9d1d9;'>Growth Confidence: {prob_buy*100:.1f}%</span></div>", unsafe_allow_html=True)
             elif prob_buy >= 0.45:
-                st.markdown(f"<div class='sig-hold'>🟡 HOLD / NEUTRAL<br><span style='font-size:18px; font-weight:500; color:#c9d1d9;'>Nesigurno trzište: {prob_buy*100:.1f}%</span></div>", unsafe_allow_html=True)
+                st.markdown(f"<div class='sig-hold'>🟡 HOLD / NEUTRAL<br><span style='font-size:18px; font-weight:500; color:#c9d1d9;'>Uncertain Market: {prob_buy*100:.1f}%</span></div>", unsafe_allow_html=True)
             else:
-                st.markdown(f"<div class='sig-sell'>🔴 SHORT / AVOID<br><span style='font-size:18px; font-weight:500; color:#c9d1d9;'>Rizik Pada: {prob_sell*100:.1f}%</span></div>", unsafe_allow_html=True)
+                st.markdown(f"<div class='sig-sell'>🔴 SHORT / AVOID<br><span style='font-size:18px; font-weight:500; color:#c9d1d9;'>Drop Risk: {prob_sell*100:.1f}%</span></div>", unsafe_allow_html=True)
             
             st.markdown("<br>", unsafe_allow_html=True)
             
@@ -282,7 +282,7 @@ with t2:
 
         st.markdown("---")
         # Feature Importance
-        st.markdown("### Sta AI trenutno gleda? (Feature Importance)")
+        st.markdown("### What is AI looking at right now? (Feature Importance)")
         imp = pd.Series(model.feature_importances_, index=m_features).sort_values(ascending=True).tail(12)
         fig_imp = go.Figure(go.Bar(
             x=imp.values, y=imp.index, orientation='h',
@@ -296,7 +296,7 @@ with t2:
         )
         st.plotly_chart(fig_imp, use_container_width=True)
 
-# ── TAB 3: INSPEKCIJA ──────────────────────────────
+# ── TAB 3: INSPECTION ──────────────────────────────
 with t3:
     i1, i2, i3 = st.columns(3)
     
@@ -313,27 +313,27 @@ with t3:
         st.markdown(row("Rate of Change (5d)", f"{last['ROC_5']:+.2f}%", roc_cls), unsafe_allow_html=True)
         
     with i2:
-        st.markdown("### Trend & Volatilnost")
-        st.markdown(row("Od SMA50", f"{last['Price_vs_SMA50']:+.2f}%", "bull" if last['Price_vs_SMA50']>0 else "bear"), unsafe_allow_html=True)
-        st.markdown(row("Od SMA200", f"{last['Price_vs_SMA200']:+.2f}%", "bull" if last['Price_vs_SMA200']>0 else "bear"), unsafe_allow_html=True)
+        st.markdown("### Trend & Volatility")
+        st.markdown(row("From SMA50", f"{last['Price_vs_SMA50']:+.2f}%", "bull" if last['Price_vs_SMA50']>0 else "bear"), unsafe_allow_html=True)
+        st.markdown(row("From SMA200", f"{last['Price_vs_SMA200']:+.2f}%", "bull" if last['Price_vs_SMA200']>0 else "bear"), unsafe_allow_html=True)
         
         bb_pos = last['BB_Position']
         bb_cls = "bear" if bb_pos>0.9 else ("bull" if bb_pos<0.1 else "neut")
-        st.markdown(row("BB Pozicija (0-1)", f"{bb_pos:.2f}", bb_cls), unsafe_allow_html=True)
-        st.markdown(row("Volatilnost (Annu.)", f"{last['Volatility_20']:.1f}%"), unsafe_allow_html=True)
+        st.markdown(row("BB Position (0-1)", f"{bb_pos:.2f}", bb_cls), unsafe_allow_html=True)
+        st.markdown(row("Volatility (Annu.)", f"{last['Volatility_20']:.1f}%"), unsafe_allow_html=True)
 
     with i3:
-        st.markdown("### Volume & Patterni")
+        st.markdown("### Volume & Patterns")
         vr = last['Volume_Ratio']
         vr_cls = "bull" if vr>1.5 else "neut"
-        st.markdown(row("Volume Skok", f"{vr:.2f}x", vr_cls), unsafe_allow_html=True)
-        st.markdown(row("Dnevni Povrat", f"{last['Daily_Return']:+.2f}%", "bull" if last['Daily_Return']>0 else "bear"), unsafe_allow_html=True)
-        st.markdown(row("Nedeljni Povrat", f"{last['Weekly_Return']:+.2f}%", "bull" if last['Weekly_Return']>0 else "bear"), unsafe_allow_html=True)
-        st.markdown(row("Mesecni Povrat", f"{last['Monthly_Return']:+.2f}%", "bull" if last['Monthly_Return']>0 else "bear"), unsafe_allow_html=True)
+        st.markdown(row("Volume Spike", f"{vr:.2f}x", vr_cls), unsafe_allow_html=True)
+        st.markdown(row("Daily Return", f"{last['Daily_Return']:+.2f}%", "bull" if last['Daily_Return']>0 else "bear"), unsafe_allow_html=True)
+        st.markdown(row("Weekly Return", f"{last['Weekly_Return']:+.2f}%", "bull" if last['Weekly_Return']>0 else "bear"), unsafe_allow_html=True)
+        st.markdown(row("Monthly Return", f"{last['Monthly_Return']:+.2f}%", "bull" if last['Monthly_Return']>0 else "bear"), unsafe_allow_html=True)
 
 # ── TAB 4: DATA ────────────────────────────────────
 with t4:
-    st.markdown("### Raw Time-Series Podaci")
+    st.markdown("### Raw Time-Series Data")
     disp = ['Close', 'Volume', 'RSI_14', 'MACD_Diff', 'BB_Position', 'Daily_Return']
     st.dataframe(
         df[disp].tail(50).sort_index(ascending=False).style.format({
@@ -343,4 +343,4 @@ with t4:
         height=500, use_container_width=True
     )
     if st.button("💾 Download CSV Dump"):
-        st.download_button("Klikni za Download", df.to_csv(), f"{symbol}_dump.csv", "text/csv")
+        st.download_button("Click to Download", df.to_csv(), f"{symbol}_dump.csv", "text/csv")

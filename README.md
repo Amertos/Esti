@@ -1,47 +1,47 @@
-# 📈 Esti
-End-to-End sistem za kvantitativno trgovanje koji koristi Machine Learning (XGBoost) za predviđanje kretanja cena kriptovaluta (BTC, ETH, SOL) i tradicionalnih aseta (AAPL, TSLA, SPY).
+# 📈 Esti AI Trading Bot
+An end-to-end quantitative trading system that utilizes Machine Learning (XGBoost) to predict price movements of cryptocurrencies (BTC, ETH, SOL) and traditional assets (AAPL, TSLA, SPY).
 
-## 🚀 Mogućnosti (Features)
-- **Data Engineering:** Automatsko preuzimanje istorijskih podataka (yfinance) i računanje preko 30 tehničkih indikatora (SMA, MACD, RSI, Bollinger Bands, OBV, Volatilnost).
-- **Machine Learning Pipeline:** Optimizovan `XGBoost` model konfigurisan sa `TimeSeriesSplit` pristupom za evaluaciju bez "Data Leakage-a", kao i sa rešenim problemom disbalansa klasa (`scale_pos_weight`).
-- **Real-Time Dashboard:** Premium Streamlit web aplikacija sa Plotly interaktivnim grafikonima. Implementiran je "Glassmorphism" dizajn, AI Gauge metar, i živa analiza feature importance-a (šta model posmatra).
+## 🚀 Features
+- **Data Engineering:** Automated historical data fetching (via `yfinance`) and calculation of over 30 technical indicators (SMA, MACD, RSI, Bollinger Bands, OBV, Volatility, etc.).
+- **Machine Learning Pipeline:** Optimized `XGBoost` model configured with a `TimeSeriesSplit` cross-validation approach to prevent data leakage. Addresses class imbalance problems automatically using `scale_pos_weight`.
+- **Real-Time Dashboard:** A premium, interactive Streamlit web application with Plotly charts. Features a modern "Glassmorphism" UI design, an AI probability gauge, and a live feature importance visualization.
 
-## ⚙️ Arhitektura Projekta
-Projekat je podeljen u 3 faze:
-1. `phase1_data.py` - Prikuplja podatke, računa indikatore i kreira target varijablu (>2% rast u 3 dana). Zatim izbacuje `.csv` dataset.
-2. `phase2_model.py` - Trenira model na prošlosti i testira ga na budućnosti. Snima gotov model kao `.pkl` i parametre u `.json`.
-3. `phase3_dashboard.py` - UI. Preuzima žive (live) podatke, procesira indikatore i unosi ih u istrenirani model, koji potom generiše signal i verovatnoću kretanja tržišta.
+## ⚙️ Project Architecture
+The project is divided into 3 modular phases:
+1. `phase1_data.py` - Fetches raw data, computes technical indicators, and creates the target variable (>2% growth in 3 days). Outputs a clean `.csv` dataset.
+2. `phase2_model.py` - Trains the XGBoost model on historical data and tests it on unseen future data. Saves the trained model as a `.pkl` file and its parameters in `.json`.
+3. `phase3_dashboard.py` - The UI. Fetches live market data, processes real-time indicators, and feeds them into the trained model to generate actionable trading signals and probabilities.
 
-## 📦 Instalacija i Pokretanje
+## 📦 Installation & Setup
 
-**1. Kloniranje repozitorijuma**
+**1. Clone the repository**
 ```bash
-git clone https://github.com/TvojUsername/esti.git
+git clone https://github.com/YourUsername/esti.git
 cd esti
 ```
 
-**2. Instaliranje zavisnosti**
+**2. Install dependencies**
 ```bash
 pip install -r requirements.txt
 ```
 
-**3. Pokretanje sistema u 3 koraka**
+**3. Run the system (3-step pipeline)**
 ```bash
-# 1. Kreiranje podataka
+# 1. Generate the dataset
 python phase1_data.py
 
-# 2. Trening Modela
+# 2. Train the AI model
 python phase2_model.py
 
-# 3. Pokretanje Dashboarda
+# 3. Launch the Web Dashboard
 streamlit run phase3_dashboard.py
 ```
 
 ## ⚠️ Disclaimer
-Ovaj kod je napisan isključivo u edukativne svrhe (Portfolio projekat) i demonstraciju Data Science veština. Modeli mogu praviti greške. **Ne koristite** ovo kao finansijski savet.
+This code is written strictly for educational purposes (Portfolio project) and to demonstrate Data Science and Machine Learning skills. ML models can make errors. **Do not use** this as financial advice.
 
-## 👨‍💻 Tehnologije
+## 👨‍💻 Tech Stack
 * **Data Science:** Python, Pandas, Numpy
-* **Machine Learning:** Scikit-Learn, XGBoost, TA (Technical Analysis)
-* **Vizualizacija i UI:** Streamlit, Plotly, Custom CSS, HTML
-* **Podaci:** Yahoo Finance (yfinance)
+* **Machine Learning:** Scikit-Learn, XGBoost, TA (Technical Analysis library)
+* **Visualization & UI:** Streamlit, Plotly, Custom CSS, HTML
+* **Data Source:** Yahoo Finance API (yfinance)

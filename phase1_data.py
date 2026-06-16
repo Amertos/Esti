@@ -1,6 +1,6 @@
 """
 PHASE 1: PRO DATA ENGINEERING PIPELINE
-Skida 5 godina BTC podataka i kreira 30+ tehnickih indikatora.
+Downloads 5 years of BTC data and creates 30+ technical indicators.
 """
 import yfinance as yf
 import pandas as pd
@@ -11,27 +11,27 @@ warnings.filterwarnings('ignore')
 
 
 def fetch_data(symbol="BTC-USD", period="5y"):
-    print(f"[FETCH] {symbol} | {period} istorije...")
+    print(f"[FETCH] {symbol} | {period} history...")
     df = yf.download(symbol, period=period, interval="1d", progress=False)
     if df.empty:
-        raise ValueError(f"Nema podataka za {symbol}.")
+        raise ValueError(f"No data available for {symbol}.")
     if isinstance(df.columns, pd.MultiIndex):
         df.columns = df.columns.droplevel(1)
     df.index = pd.to_datetime(df.index)
     df.sort_index(inplace=True)
-    print(f"  Skinuto {len(df)} dana sirovih podataka.")
+    print(f"  Fetched {len(df)} days of raw data.")
     return df
 
 
 def add_indicators(df):
-    print("[ENGINEERING] Pravljenje 30+ profesionalnih indikatora...")
+    print("[ENGINEERING] Computing 30+ professional indicators...")
 
     close = df['Close']
     high  = df['High']
     low   = df['Low']
     vol   = df['Volume']
 
-    # --- TREND INDIKATORI ---
+    # --- TREND INDICATORS ---
     for w in [10, 20, 50, 200]:
         df[f'SMA_{w}'] = close.rolling(w).mean()
         df[f'EMA_{w}'] = close.ewm(span=w, adjust=False).mean()
@@ -39,11 +39,11 @@ def add_indicators(df):
     # Golden / Death Cross signal (SMA 50 vs 200)
     df['GoldenCross'] = (df['SMA_50'] > df['SMA_200']).astype(int)
 
-    # Cena relativno prema SMA50 i SMA200 (% koliko je iznad/ispod)
+    # Price relative to SMA50 and SMA200 (% above/below)
     df['Price_vs_SMA50']  = (close - df['SMA_50'])  / df['SMA_50']  * 100
     df['Price_vs_SMA200'] = (close - df['SMA_200']) / df['SMA_200'] * 100
 
-    # --- MOMENTUM INDIKATORI ---
+    # --- MOMENTUM INDICATORS ---
     df['RSI_14']  = ta.momentum.RSIIndicator(close=close, window=14).rsi()
     df['RSI_7']   = ta.momentum.RSIIndicator(close=close, window=7).rsi()
 
@@ -61,22 +61,22 @@ def add_indicators(df):
     df['MACD_Diff']   = macd.macd_diff()
     df['MACD_Cross']  = (df['MACD_Line'] > df['MACD_Signal']).astype(int)
 
-    # --- VOLATILNOST ---
+    # --- VOLATILITY ---
     bb = ta.volatility.BollingerBands(close=close, window=20, window_dev=2)
     df['BB_High']     = bb.bollinger_hband()
     df['BB_Low']      = bb.bollinger_lband()
-    df['BB_Width']    = (df['BB_High'] - df['BB_Low']) / close  # Sirina kanala
+    df['BB_Width']    = (df['BB_High'] - df['BB_Low']) / close  # Channel width
     df['BB_Position'] = (close - df['BB_Low']) / (df['BB_High'] - df['BB_Low'])
 
     df['ATR_14']        = ta.volatility.AverageTrueRange(high=high, low=low, close=close, window=14).average_true_range()
-    df['Volatility_20'] = close.pct_change().rolling(20).std() * np.sqrt(365) * 100  # Anulizovana volatilnost
+    df['Volatility_20'] = close.pct_change().rolling(20).std() * np.sqrt(365) * 100  # Annualized volatility
 
-    # --- VOLUMEN ---
+    # --- VOLUME ---
     df['OBV']          = ta.volume.OnBalanceVolumeIndicator(close=close, volume=vol).on_balance_volume()
     df['Volume_SMA20'] = vol.rolling(20).mean()
-    df['Volume_Ratio'] = vol / df['Volume_SMA20']  # Da li je danas neobicno velik volumen?
+    df['Volume_Ratio'] = vol / df['Volume_SMA20']  # Unusual volume spike detection
 
-    # --- POVRATI I ISTORIJA (LAG FEATURES - "Memorija" mašine) ---
+    # --- RETURNS & HISTORY (LAG FEATURES - "Memory" of the machine) ---
     df['Daily_Return']   = close.pct_change() * 100
     df['Weekly_Return']  = close.pct_change(5) * 100
     df['Monthly_Return'] = close.pct_change(21) * 100
@@ -84,7 +84,7 @@ def add_indicators(df):
     for lag in [1, 2, 3, 5, 7, 14]:
         df[f'Return_Lag{lag}'] = df['Daily_Return'].shift(lag)
 
-    # Dani u nedelji (ponedeljak=0, petak=4) - sezonalnost
+    # Day of week (Monday=0, Friday=4) - Seasonality
     df['DayOfWeek'] = df.index.dayofweek
 
     return df
@@ -92,11 +92,11 @@ def add_indicators(df):
 
 def create_target(df, threshold=0.02):
     """
-    Target: Da li ce cena skociti vise od 2% u sledecih 3 dana?
-    Gledamo 3 dana unapred jer je manje suma i trader ima vremena da reaguje.
+    Target: Will the price jump more than 2% in the next 3 days?
+    We look 3 days ahead to reduce noise and give traders time to react.
     """
-    print(f"[TARGET] Definisanje cilja: Skok >={threshold*100}% u sledeca 3 dana...")
-    future_return = close_3d = df['Close'].shift(-3) / df['Close'] - 1
+    print(f"[TARGET] Defining target: Growth >={threshold*100}% in the next 3 days...")
+    future_return = df['Close'].shift(-3) / df['Close'] - 1
     df['Target'] = (future_return >= threshold).astype(int)
     return df
 
@@ -116,14 +116,14 @@ def run_pipeline(symbol="BTC-USD", period="5y"):
     output = os.path.join(base_dir, f"{symbol.replace('-','_')}_dataset.csv")
     df.to_csv(output)
 
-    # Statistika
+    # Statistics
     buy_pct = df['Target'].mean() * 100
-    print(f"\n[DONE] {len(df)} redova | {len(df.columns)} kolona")
-    print(f"  Kupi signala: {buy_pct:.1f}% dana | Prodaj/Cekaj: {100-buy_pct:.1f}%")
-    print(f"  Sacuvano: {output}\n")
+    print(f"\n[DONE] {len(df)} rows | {len(df.columns)} columns")
+    print(f"  Buy signals: {buy_pct:.1f}% of days | Sell/Wait: {100-buy_pct:.1f}%")
+    print(f"  Saved to: {output}\n")
     return df
 
 
 if __name__ == "__main__":
-    for simbol in ["BTC-USD", "ETH-USD"]:
-        run_pipeline(simbol, "5y")
+    for symbol in ["BTC-USD", "ETH-USD"]:
+        run_pipeline(symbol, "5y")
