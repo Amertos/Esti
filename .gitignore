@@ -1,7 +1,6 @@
-# Podaci i Modeli
+# Podaci
 *.csv
-*.pkl
-*.json
+
 
 # Virtual okruzenje
 venv/
